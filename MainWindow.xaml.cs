@@ -29,62 +29,51 @@ namespace SystemInfoCollector
             HardwareInfo.ItemsSource = hardwares;
         }
 
+
+        private Hardware GetHardware(ManagementObjectCollection collection, string name, string result)
+        {
+            Hardware hardware = new Hardware { Name = name };
+            foreach(ManagementObject queryObj in collection)
+            {
+                try
+                {
+                    hardware.Result = queryObj[result].ToString();
+                }
+                catch
+                {
+                    hardware.Result = "Не удалось получить данные";
+                }
+            }
+            return hardware;
+        }
+        private List<Hardware> GetComputerSystemHardWare()
+        {
+            ManagementObjectCollection ComputerSystem =
+                new ManagementObjectSearcher("root\\CIMV2",
+                "SELECT * FROM Win32_ComputerSystem").Get();
+            Hardware domain = GetHardware(ComputerSystem, "Имя домена", "Domain");
+            Hardware domainRole = GetHardware(ComputerSystem, "Доменная роль", "DomainRole");
+            Hardware motherboard = GetHardware(ComputerSystem, "Материнская плата", "Model");
+            Hardware computerName = GetHardware(ComputerSystem, "Имя компьютера", "Name");
+            Hardware user = GetHardware(ComputerSystem, "Имя пользователя", "UserName");
+            Hardware[] templist = new Hardware[] { domain, domainRole, motherboard, computerName, user};
+            List<Hardware> outlist =  templist.ToList();
+            return outlist;
+        }
         private List<Hardware> ShowSystemInfo()
         {
             List<Hardware> hardwareList = new List<Hardware>();
-            Hardware osVersion = new Hardware
-            {
-                Name = "Операционная система (номер версии)",
-                Result = Environment.OSVersion.ToString()
-            };
-            hardwareList.Add(osVersion);
-            Hardware procArch = new Hardware
-            {
-                Name = "Разрядность процессора",
-                Result = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE").ToString()
-            };
-            hardwareList.Add(procArch);
-            Hardware procModel = new Hardware
-            {
-                Name = "Модель процессора",
-                Result = Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER").ToString()
-            };
-            hardwareList.Add(procModel);
-            Hardware procCount = new Hardware
-            {
-                Name = "Число процессоров",
-                Result = Environment.ProcessorCount.ToString()
-            };
-            hardwareList.Add(procCount);
-            Hardware systemDirectory = new Hardware
-            {
-                Name = "Операционная система (номер версии)",
-                Result = Environment.OSVersion.ToString()
-            };
-            hardwareList.Add(systemDirectory);
-            Hardware userName = new Hardware
-            {
-                Name = "Имя пользователя",
-                Result = Environment.UserName.ToString()
-            };
-            hardwareList.Add(userName);
-            Hardware userDomainName = new Hardware
-            {
-                Name = "Доменное имя пользователя",
-                Result = Environment.UserDomainName.ToString()
-            };
-            hardwareList.Add(userDomainName);
-            //// Локальные диски
-            //Console.WriteLine("Локальные диски: ");
-            //foreach (DriveInfo dI in DriveInfo.GetDrives())
-            //{
-            //    Console.Write(
-            //          "\t Диск: {0}\n\t" +
-            //          " Формат диска: {1}\n\t " +
-            //          "Размер диска (ГБ): {2}\n\t Доступное свободное место (ГБ): {3}\n",
-            //          dI.Name, dI.DriveFormat, (double)dI.TotalSize / 1024 / 1024 / 1024, (double)dI.AvailableFreeSpace / 1024 / 1024 / 1024);
-            //    Console.WriteLine();
-            //}
+            hardwareList.AddRange(GetComputerSystemHardWare());
+            ManagementObjectCollection desktopMonitorCollection =
+                new ManagementObjectSearcher("root\\CIMV2",
+                "SELECT * FROM Win32_DesktopMonitor").Get();
+            Hardware monitor = GetHardware(desktopMonitorCollection, "Основной монитор", "Name");
+            ManagementObjectCollection keyboardCollection = new ManagementObjectSearcher("root\\CIMV2",
+                    "SELECT * FROM Win32_Keyboard").Get();
+            Hardware keyboard = GetHardware(keyboardCollection, "Клавиатура", "Name");
+            hardwareList.Add(monitor);
+            hardwareList.Add(keyboard);
+            
             return hardwareList;
         }
     }
