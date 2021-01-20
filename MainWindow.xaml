@@ -7,9 +7,22 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <DataGrid Name="HardwareInfo" AutoGenerateColumns="False">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="15"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Рабочие станции" Grid.Row="0"/>
+            <ListBox Name="WorkStations" Grid.Row="1" SelectionChanged="WorkStations_SelectionChanged">
+            </ListBox>
+        </Grid>
+        <DataGrid Name="HardwareInfo" AutoGenerateColumns="False" Grid.Column="1">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Имя" Binding="{Binding Path=Name}"/>
+                <DataGridTextColumn Header="Наименование" Binding="{Binding Path=Name}"/>
                 <DataGridTextColumn Header="Результат" Binding="{Binding Path=Result}"/>
             </DataGrid.Columns>
         </DataGrid>

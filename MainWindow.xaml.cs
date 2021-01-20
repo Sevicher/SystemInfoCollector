@@ -14,6 +14,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Management;
 using System.IO;
+using System.DirectoryServices.ActiveDirectory;
+using System.DirectoryServices;
 
 namespace SystemInfoCollector
 {
@@ -22,59 +24,20 @@ namespace SystemInfoCollector
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<Workstation> _workStations;
         public MainWindow()
         {
             InitializeComponent();
-            List<Hardware> hardwares = ShowSystemInfo();
+            List<Hardware> hardwares = HardwareCollector.ShowSystemInfo();
             HardwareInfo.ItemsSource = hardwares;
+            List<Workstation> workstations = Connector.ConnectAndCollectInfo();
+            WorkStations.ItemsSource = workstations.Select(w => w.Name);
+            _workStations = workstations;
         }
 
-
-        private Hardware GetHardware(ManagementObjectCollection collection, string name, string result)
+        private void WorkStations_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Hardware hardware = new Hardware { Name = name };
-            foreach(ManagementObject queryObj in collection)
-            {
-                try
-                {
-                    hardware.Result = queryObj[result].ToString();
-                }
-                catch
-                {
-                    hardware.Result = "Не удалось получить данные";
-                }
-            }
-            return hardware;
-        }
-        private List<Hardware> GetComputerSystemHardWare()
-        {
-            ManagementObjectCollection ComputerSystem =
-                new ManagementObjectSearcher("root\\CIMV2",
-                "SELECT * FROM Win32_ComputerSystem").Get();
-            Hardware domain = GetHardware(ComputerSystem, "Имя домена", "Domain");
-            Hardware domainRole = GetHardware(ComputerSystem, "Доменная роль", "DomainRole");
-            Hardware motherboard = GetHardware(ComputerSystem, "Материнская плата", "Model");
-            Hardware computerName = GetHardware(ComputerSystem, "Имя компьютера", "Name");
-            Hardware user = GetHardware(ComputerSystem, "Имя пользователя", "UserName");
-            Hardware[] templist = new Hardware[] { domain, domainRole, motherboard, computerName, user};
-            List<Hardware> outlist =  templist.ToList();
-            return outlist;
-        }
-        private List<Hardware> ShowSystemInfo()
-        {
-            List<Hardware> hardwareList = new List<Hardware>();
-            hardwareList.AddRange(GetComputerSystemHardWare());
-            ManagementObjectCollection desktopMonitorCollection =
-                new ManagementObjectSearcher("root\\CIMV2",
-                "SELECT * FROM Win32_DesktopMonitor").Get();
-            Hardware monitor = GetHardware(desktopMonitorCollection, "Основной монитор", "Name");
-            ManagementObjectCollection keyboardCollection = new ManagementObjectSearcher("root\\CIMV2",
-                    "SELECT * FROM Win32_Keyboard").Get();
-            Hardware keyboard = GetHardware(keyboardCollection, "Клавиатура", "Name");
-            hardwareList.Add(monitor);
-            hardwareList.Add(keyboard);
-            
-            return hardwareList;
+            HardwareInfo.ItemsSource = _workStations[WorkStations.SelectedIndex].Hardwares;
         }
     }
 }
